@@ -2,82 +2,104 @@ const express = require("express");
 const app = new express();
 const bodyParser = require("body-parser");
 const users = require("./users");
+const matches = require("./matches");
+const comments = require("./comments");
+
+
 
 app.use(bodyParser.json());
 
-app.get("/users", (request, response) => {
-    console.log(request.body);
-    response.json(users);
+app.post("/register", (req, res) =>{
+    users.push(req.body);
+
+    res.end();
 });
 
-app.post("/users",(request, response) => {
-    console.log(request.body);
-    const user = request.body;
-    //users.push([user.id, user.fistName,user.lastName, user.age]);
-    users.push({
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        age: user.age
-    });
+app.get("/login/users/:id", (req, res) => {
+    const CurrentUser = users.find(u => u.id === parseInt(req.params.id));
+
+    res.json(CurrentUser);
 });
 
-app.delete("/users", (request, response) => {
-    console.log(request.body);
-    const del = request.body;
-    users.splice(del.id-1, 1);
+app.get("/users", (req, res) => {  // Function only for admins
 
+    res.json(users);
 });
 
-app.get("/usersfind", (request, response) => {
-    console.log(request.body);
-    const look = request.body;
-    const result = users.find( found => found.id === look.id);
-    response.json(result);
+
+app.put("/login/users/:id", (req, res) => {
+    const CurrentUser = users.find(u => u.id === parseInt(req.params.id));
+    const UpdateUser = req.body;
+
+    CurrentUser.firstName = UpdateUser.firstname;
+    CurrentUser.lastName = UpdateUser.lastname;
+    CurrentUser.age = UpdateUser.age;
+
+    res.json();
 });
 
-app.get("/usersByAge", (request, response) => {
-    console.log(request.body);
-    const result = users.sort(function(a,b) {
-        return a.age - b.age;
-    });
-    response.json(result);
+
+app.delete("/login/users/:id", (req, res) => {
+    const idToDelete = req.params.id;
+    const indexToDelete = users.findIndex(u => u.id === parseInt(idToDelete));
+  
+    users.splice(indexToDelete, 1);
+  
+    res.json();
 });
 
-app.get("/usersSortedByFirstName", (request, response) => {
-    console.log(request.body);
-    const result = users.sort(function(a,b) {
-        
-        var nameA = a.firstName.toUpperCase(); // ignore upper and lowercase
-        var nameB = b.firstName.toUpperCase(); // ignore upper and lowercase
-        if (nameA < nameB) {
-        return -1;
-        }
-        if (nameA > nameB) {
-        return 1;
-        }
-
-        // names must be equal
-        return 0;
-    });
-    response.json(result);
+app.get("/matches", (req, res) => {
+    res.json(matches);
 });
 
-app.get("/usersWithFirstNameContainingString", (request, response) => {
-    console.log(request.body);
-    const shouldStartWith = request.body;
-    const result = users.filter((first) => first.firstName.startsWith(shouldStartWith.words));
-    response.json(result);
+app.post("/matches", (req, res) => {
+    const match = req.body;
+    matches.push(match);
 
+    res.json();
 });
 
-app.get("/usersOlderThan", (request, response) => {
-    console.log(request.body);
-    const years = request.body;
-    const result = users.filter(old => old.age > years.age);
-    response.json(result);
+app.get("/matches/:id", (req, res) => {
+    const CurrentMatch = matches.find(m => m.id === parseInt(req.params.id));
+
+    res.json(CurrentMatch);
 });
 
+app.put("/matches/:id", (req, res) => {
+    const CurrentMatch = matches.find(m => m.id === parseInt(req.params.id));
+    const UpdateMatch = req.body;
+
+    CurrentMatch.namematch = UpdateMatch.namematch;
+    CurrentMatch.result = UpdateMatch.result;
+    CurrentMatch.date = UpdateMatch.date;
+
+    res.json();
+});
+
+app.delete("/matches/:id", (req, res) => {
+    const idMatch = req.params.id;
+    const IdDeleteMatch = matches.findIndex(m => m.id === parseInt(idMatch));
+
+    matches.splice(IdDeleteMatch, 1);
+
+    res.json();
+});
+
+app.post("/matches/:id/comments", (req, res) => {
+    const CurrentMatch = matches.find(m => m.id === parseInt(req.params.id));
+    const comment = req.body;
+
+    comments.push(comment);
+
+    res.json();
+});
+
+app.get("/matches/:id/comments/:com", (req, res) => {
+    const CurrentMatch = matches.find(m => m.id === parseInt(req.params.id));
+    const CurrentComment = comments.find(c => c.id === parseInt(req.params.com));
+
+    res.end(`${CurrentMatch.namematch} ${CurrentMatch.result} Comment:${CurrentComment.text}`);
+});
 
 app.listen(4444, () => {
     console.log(`Listening on ${4444}`);
